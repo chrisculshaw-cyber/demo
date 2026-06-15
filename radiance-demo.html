@@ -102,11 +102,11 @@ h1,h2,h3{font-family:"Cormorant Garamond",Georgia,serif;margin:0;line-height:1}
 .success.show{display:block}
 .tick{width:74px;height:74px;border-radius:50%;margin:6px auto 14px;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,rgba(127,214,162,.28),rgba(255,255,255,.04));border:1px solid rgba(127,214,162,.7);box-shadow:0 0 0 8px rgba(127,214,162,.08)}
 .tick i{font-style:normal;font-size:38px;color:#7fd6a2;line-height:1}
-.summary{border:1px solid rgba(200,166,107,.34);border-radius:18px;padding:4px 16px;margin-top:16px;text-align:left;background:rgba(0,0,0,.14)}
+.summary{border:1px solid var(--line);border-radius:18px;padding:4px 16px;margin-top:16px;text-align:left;background:#fff;box-shadow:0 10px 28px rgba(27,42,74,.08)}
 .summary-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
 .summary-row:first-child{border-top:none}
-.summary-row span{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--gold2);font-weight:800}
-.summary-row b{font-size:13.5px;color:#fff;font-weight:700;text-align:right}
+.summary-row span{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);font-weight:800}
+.summary-row b{font-size:13.5px;color:var(--ink);font-weight:700;text-align:right}
 .summary-row .paid{color:#7fd6a2}
 /* loyalty stamp card */
 .stampcard{background:linear-gradient(160deg,#1B2A4A,#26395f);border:1px solid #26395f;color:#fff}
@@ -307,7 +307,7 @@ h1,h2,h3{font-family:"Cormorant Garamond",Georgia,serif;margin:0;line-height:1}
        <div class="summary-row"><span>Date &amp; time</span><b>Thu 26 June · 11:00</b></div>
        <div class="summary-row"><span>Location</span><b>38 Billing Road, Northampton</b></div>
        <div class="summary-row"><span>Deposit</span><b class="paid">£50 paid ✓</b></div>
-       <div class="summary-row"><span>Reference</span><b>Radiance Lab-7204</b></div>
+       <div class="summary-row"><span>Reference</span><b>RL-7204</b></div>
      </div>
      <button class="button" style="letter-spacing:.1em" onclick="addToCalendar()">Add to calendar</button>
      <span class="gold-btn" style="margin-top:14px" onclick="resetBooking();go('home')">Back to home</span>
@@ -386,7 +386,7 @@ h1,h2,h3{font-family:"Cormorant Garamond",Georgia,serif;margin:0;line-height:1}
      <div class="msg-item" onclick="openThread(this,'booking')">
        <div class="ava">R</div>
        <div class="mid"><div class="row"><b>Radiance Lab</b><time>12 May</time></div>
-         <p>Booking confirmed — Skin Booster, Thu 26 June 11:00. Ref Radiance Lab-7204.</p></div>
+         <p>Booking confirmed — Skin Booster, Thu 26 June 11:00. Ref RL-7204.</p></div>
      </div>
      <div class="msg-item" onclick="openThread(this,'offer')">
        <div class="ava">R</div>
@@ -511,7 +511,7 @@ var threads={
     {f:'them',t:'Reminder: your appointment is Thu 26 June at 11:00 with Jodie-Kate. Please arrive 5 minutes early. Reply STOP to cancel.',time:'Yesterday 18:00'}
   ]},
   booking:{who:'Radiance Lab',title:'Booking confirmed',msgs:[
-    {f:'them',t:'Booking confirmed — Skin Booster, Thu 26 June 11:00. Reference Radiance Lab-7204. A £50 deposit has been received.',time:'12 May 14:21'}
+    {f:'them',t:'Booking confirmed — Skin Booster, Thu 26 June 11:00. Reference RL-7204. A £50 deposit has been received.',time:'12 May 14:21'}
   ]},
   offer:{who:'Radiance Lab',title:'This month\u2019s offer',msgs:[
     {f:'them',t:'Refer a friend this month and you both earn a loyalty stamp. ',time:'8 May 10:05'}
@@ -600,7 +600,7 @@ function confirmBooking(){
   // a confirmation message arrives in the inbox
   threads.booking.msgs.push({f:'them',t:'Thanks Emma — your booking is confirmed for Thu 26 June 11:00. We\u2019ll send aftercare notes too. \u2014 Jodie-Kate',time:'Now'});
   setTimeout(function(){
-    pushNotif('Radiance Lab','Booking confirmed — Skin Booster, Thu 26 June 11:00. Ref Radiance Lab-7204.','booking');
+    pushNotif('Radiance Lab','Booking confirmed — Skin Booster, Thu 26 June 11:00. Ref RL-7204.','booking');
   }, 1400);
 }
 function resetBooking(){
