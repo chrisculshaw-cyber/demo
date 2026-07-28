@@ -90,7 +90,8 @@
   .teams{display:flex;align-items:center;justify-content:center;gap:24px}
   .team{flex:1;max-width:150px}
   .team .badge{width:66px;height:66px;margin:0 auto 12px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Oswald';font-weight:700;font-size:19px;background:var(--wash);border:1px solid var(--line);color:var(--ink)}
-  .team .badge.dale{background:var(--navy);color:#fff;border:1px solid var(--royal)}
+  .team .badge{background:#fff;padding:6px}
+  .team .badge img{width:100%;height:100%;object-fit:contain}
   .team p{font-family:'Oswald';font-weight:600;font-size:14.5px;text-transform:uppercase;line-height:1.25;color:var(--ink)}
   .vs{font-family:'Oswald';font-weight:700;font-size:14px;color:#93A3BC;letter-spacing:.2em}
   .fixture .meta{margin-top:16px;font-size:13.5px;color:var(--body);font-weight:500}
@@ -265,9 +266,9 @@
       </div>
       <div class="fixture">
         <div class="teams">
-          <div class="team"><div class="badge dale">DALE</div><p>Rochdale AFC</p></div>
+          <div class="team"><div class="badge"><img src="rafc badge.png" alt="Rochdale AFC"></div><p>Rochdale AFC</p></div>
           <span class="vs">VS</span>
-          <div class="team"><div class="badge">HFX</div><p>FC Halifax Town</p></div>
+          <div class="team"><div class="badge"><img src="halifax-logo.png" alt="FC Halifax Town"></div><p>FC Halifax Town</p></div>
         </div>
         <p class="meta">Crown Oil Arena &middot; TONIGHT &middot; 7:45pm kick-off</p>
         <div class="countdown" id="countdown" aria-label="Countdown to kick-off">
