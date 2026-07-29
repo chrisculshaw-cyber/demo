@@ -217,6 +217,8 @@
   .fx b{font-family:'Oswald';font-weight:600;font-size:17px;text-transform:uppercase;display:block;line-height:1.2;margin:3px 0 2px;color:#fff}
   .fx span{font-size:12px;color:#B9CCE8}
   .fx .tag{display:inline-block;background:var(--royal);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;margin-left:6px;vertical-align:1px}
+  .fx{display:flex;gap:14px;align-items:center}
+  .fx .fxb{flex:none;width:40px;height:40px;object-fit:contain;background:#fff;border-radius:50%;padding:4px}
   @media (max-width:980px){.fx-inner{grid-template-columns:1fr}.fx-rows{grid-template-columns:1fr}.fx{border-left:0;border-top:1px solid rgba(255,255,255,.14)}}
 
   /* Partners of the Trust */
@@ -334,9 +336,9 @@
       </div>
       <div class="fixture">
         <div class="teams">
-          <div class="team"><div class="badge"><img src="/logo/Tranmere-Rovers.png" alt="Tranmere Rovers" onerror="this.style.display='none';this.parentElement.textContent='TRFC'"></div><p>Tranmere Rovers</p></div>
+          <div class="team"><div class="badge"><img src="logo/Tranmere-Rovers.png" alt="Tranmere Rovers" onerror="this.style.display='none';this.parentElement.textContent='TRFC'"></div><p>Tranmere Rovers</p></div>
           <span class="vs">VS</span>
-          <div class="team"><div class="badge"><img src="rafc badge.png" alt="Rochdale AFC"></div><p>Rochdale AFC</p></div>
+          <div class="team"><div class="badge"><img src="logo/badge.png" alt="Rochdale AFC"></div><p>Rochdale AFC</p></div>
         </div>
         <p class="meta">Prenton Park &middot; Sat 1 August &middot; 3:00pm kick-off</p>
         <div class="countdown" id="countdown" aria-label="Countdown to kick-off">
@@ -359,19 +361,22 @@
     <div class="fx-label">Coming up</div>
     <div class="fx-rows">
       <div class="fx">
-        <p class="d">Sat 1 Aug &middot; Carabao Cup Prelim</p>
+        <img class="fxb" src="logo/Tranmere-Rovers.png" alt="">
+        <div><p class="d">Sat 1 Aug &middot; Carabao Cup Prelim</p>
         <b>Tranmere Rovers (A)</b>
-        <span>Prenton Park &middot; 3:00pm</span>
+        <span>Prenton Park &middot; 3:00pm</span></div>
       </div>
       <div class="fx">
-        <p class="d">Sat 15 Aug &middot; League Two</p>
+        <img class="fxb" src="logo/Newport-County.png" alt="">
+        <div><p class="d">Sat 15 Aug &middot; League Two</p>
         <b>Newport County (A)</b>
-        <span>Rodney Parade &middot; 12:30pm &middot; Live on Sky Sports+</span>
+        <span>Rodney Parade &middot; 12:30pm &middot; Live on Sky Sports+</span></div>
       </div>
       <div class="fx">
-        <p class="d">Sat 22 Aug &middot; League Two</p>
+        <img class="fxb" src="logo/Crawley-Town.png" alt="">
+        <div><p class="d">Sat 22 Aug &middot; League Two</p>
         <b>Crawley Town (H)<span class="tag">First home game</span></b>
-        <span>Crown Oil Arena &middot; 3:00pm</span>
+        <span>Crown Oil Arena &middot; 3:00pm</span></div>
       </div>
     </div>
   </div>
