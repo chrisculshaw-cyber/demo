@@ -69,6 +69,16 @@
       <div class="card"><h3>Age profile</h3><canvas id="cAge"></canvas></div>
       <div class="card"><h3>Join method</h3><canvas id="cMethod"></canvas></div>
       <div class="card"><h3>Top towns</h3><canvas id="cTowns"></canvas></div>
+      <div class="card full" id="exSec" style="display:none">
+        <h3>Exiles &mdash; overseas &amp; England</h3>
+        <div class="kpis" id="exKpis" style="margin:10px 0"></div>
+        <div class="grid" style="margin-top:4px">
+          <div class="card"><h3>Overseas by country</h3><canvas id="cOverseas"></canvas></div>
+          <div class="card"><h3>England &mdash; counties</h3><canvas id="cCounties"></canvas></div>
+          <div class="card full"><h3>Cities &amp; towns breakdown</h3>
+            <div style="max-height:280px;overflow:auto"><table id="townsTable"></table></div></div>
+        </div>
+      </div>
       <div class="card full">
         <h3>Renewal chase list — last season's members not yet in this season <span class="pill" id="lapsedCount"></span></h3>
         <p style="font-size:13px;margin-bottom:8px">Matched by name + postcode across season tabs. Sorted with Exiles first (email is the only route to them).</p>
@@ -136,6 +146,55 @@ let charts=[];
 function chart(id,cfg){const c=new Chart($(id),cfg);charts.push(c);return c}
 const ROYAL='#0057A7',NAVY='#0E1F3D',GOLD='#E8B84B',ICE='#8FC1FF',GREEN='#1E8E5A';
 
+function parseExiles(wb){
+  const name=wb.SheetNames.find(n=>low(n).includes('exile')); if(!name)return null;
+  const g=XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,defval:''});
+  const out={overseas:[],england:[],summary:null,seasons:[]};
+  for(let r=0;r<g.length;r++)for(let c=0;c<(g[r]||[]).length;c++){
+    const v=low(g[r][c]);
+    if(v==='country'&&!out.overseas.length){
+      out.seasons=[];
+      for(const x of g[r].slice(c+1)){const t=norm(x);if(/\d{4}\/\d{2}/.test(t))out.seasons.push(t);else break;}
+      for(let i=r+1;i<g.length;i++){const row=g[i]||[];if(!norm(row[c]))break;
+        out.overseas.push({name:norm(row[c]),vals:out.seasons.map((_,k)=>+row[c+1+k]||0)});}
+    }
+    if(v==='counties'&&!out.england.length){
+      let tc=-1;g[r].forEach((h,k)=>{if(low(h).includes('towns'))tc=k});
+      for(let i=r+1;i<g.length;i++){const row=g[i]||[];if(!norm(row[c]))break;
+        out.england.push({name:norm(row[c]),count:+row[c+1]||0,towns:tc>=0?norm(row[tc]):''});}
+    }
+    if(v==='overseas'&&!out.summary){
+      const nums=x=>(g[x]||[]).map(y=>+y).filter(y=>!isNaN(y)&&y>0);
+      const ov=nums(r),en=nums(r+1),tot=nums(r+2);
+      if(ov.length&&en.length&&tot.length)out.summary={overseas:ov,england:en,total:tot};
+    }
+  }
+  return (out.overseas.length||out.england.length||out.summary)?out:null;
+}
+function renderExiles(wb){
+  const e=parseExiles(wb); const sec=$('exSec'); if(!e){sec.style.display='none';return}
+  sec.style.display='block';
+  const k=$('exKpis');k.innerHTML='';
+  const kpi=(label,arr)=>{
+    if(!arr)return;
+    const cur=arr[0],prev=arr[1];
+    const d=prev!=null?`<span class="delta ${cur>=prev?'up':'down'}">${cur-prev>=0?'+':''}${cur-prev} vs last season</span>`:'';
+    k.insertAdjacentHTML('beforeend',`<div class="kpi"><span>${label}</span><b>${cur}</b>${d}</div>`);
+  };
+  if(e.summary){kpi('Overseas exiles',e.summary.overseas);kpi('England exiles',e.summary.england);kpi('Total exiles',e.summary.total);}
+  if(e.overseas.length){
+    const top=e.overseas.slice().sort((a,b)=>b.vals[0]-a.vals[0]).slice(0,10);
+    const ds=[{label:e.seasons[0]||'Now',data:top.map(o=>o.vals[0]),backgroundColor:ROYAL}];
+    if(e.seasons[1])ds.push({label:e.seasons[1],data:top.map(o=>o.vals[1]||0),backgroundColor:'#B9CCE8'});
+    chart('cOverseas',{type:'bar',data:{labels:top.map(o=>o.name),datasets:ds},options:{indexAxis:'y',plugins:{legend:{position:'bottom'}}}});
+  }
+  if(e.england.length){
+    const top=e.england.slice().sort((a,b)=>b.count-a.count).slice(0,10);
+    chart('cCounties',{type:'bar',data:{labels:top.map(o=>o.name),datasets:[{data:top.map(o=>o.count),backgroundColor:GOLD}]},options:{indexAxis:'y',plugins:{legend:{display:false}}}});
+    $('townsTable').innerHTML='<tr><th>County</th><th>Members</th><th>Cities / towns</th></tr>'+
+      e.england.map(o=>`<tr><td>${o.name}</td><td>${o.count}</td><td>${o.towns}</td></tr>`).join('');
+  }
+}
 function handle(file){
   if(!file)return;
   const reader=new FileReader();
@@ -237,6 +296,7 @@ function analyse(wb){
     `<b>${dupes}</b> possible duplicate entries (same name + postcode)<br>`+
     `<b>${cancelled}</b> rows on the Cancelled tab`;
 
+  renderExiles(wb);
   drop.style.display='none';$('dash').style.display='block';
 }
 </script>
