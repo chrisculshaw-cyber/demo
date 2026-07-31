@@ -161,6 +161,32 @@ function col(o,frag){const k=Object.keys(o).find(k=>low(k).includes(frag));retur
 function mtype(o){const t=low(col(o,'membership type'));if(t.includes('jun'))return 'Junior';if(t.includes('ex'))return 'Exile';if(t.includes('ad'))return 'Adult';return t?t[0].toUpperCase()+t.slice(1):'Unknown'}
 function isNew(o){const v=low(col(o,'new'));return v.startsWith('n')&&!v.startsWith('no')}
 
+function parseHistory(wb){
+  for(const name of wb.SheetNames){
+    const g=XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,defval:''});
+    for(let r=0;r<g.length;r++){
+      const cells=(g[r]||[]).map(low);
+      const si=cells.findIndex(c=>c==='season');
+      if(si<0||!cells.some(c=>c==='adult')||!cells.some(c=>c==='total'))continue;
+      const idx={};g[r].forEach((h,k)=>{const t=low(h);
+        if(t==='adult')idx.a=k;if(t==='exile')idx.e=k;if(t==='junior')idx.j=k;
+        if(t==='total')idx.t=k;if(t.includes('att'))idx.att=k;if(t.includes('%'))idx.pct=k;});
+      const rows=[];
+      for(let i=r+1;i<g.length;i++){
+        const row=g[i]||[];const s=norm(row[si]);
+        if(!/^\d{4}\/\d{2}$/.test(s)){if(rows.length)break;else continue;}
+        const num=v=>{const n=parseFloat(String(v).replace(/[,%]/g,''));return isNaN(n)?null:n};
+        let pct=idx.pct!=null?num(row[idx.pct]):null;
+        if(pct!=null&&pct<=1)pct=pct*100;
+        rows.push({season:s,adult:num(row[idx.a])||0,exile:num(row[idx.e])||0,
+                   junior:num(row[idx.j])||0,total:num(row[idx.t])||0,
+                   att:idx.att!=null?num(row[idx.att]):null,pct:pct});
+      }
+      if(rows.length>=3)return rows;
+    }
+  }
+  return null;
+}
 function seasonKey(name){
   const m=name.match(/(\d{2})\s*[-\/]\s*(\d{2})/);
   return m?('20'+m[1]+'/'+m[2]):null;
@@ -315,7 +341,8 @@ function analyse(wb){
   const tables={};
   wb.SheetNames.forEach(n=>{const t=findTable(wb.Sheets[n]);if(t)tables[n]=t});
   // classify: current = tab with highest season key that isn't cancelled; seasons map
-  const seasonTabs=Object.keys(tables).filter(n=>seasonKey(n)&&!low(n).includes('cancel'));
+  const lapsedTabs=Object.keys(tables).filter(n=>low(n).includes('lapsed')).sort((a,b)=>(seasonKey(a)||'')<(seasonKey(b)||'')?-1:1);
+  const seasonTabs=Object.keys(tables).filter(n=>seasonKey(n)&&!low(n).includes('cancel')&&!low(n).includes('lapsed'));
   seasonTabs.sort((a,b)=>seasonKey(a)<seasonKey(b)?-1:1);
   const currentTab=seasonTabs[seasonTabs.length-1];
   if(!currentTab){alert('No membership table found — looking for a sheet with MEMBERSHIP TYPE and LAST NAME headers.');return}
@@ -327,12 +354,14 @@ function analyse(wb){
   const types={Adult:0,Exile:0,Junior:0,Unknown:0};
   cur.forEach(o=>types[mtype(o)]=(types[mtype(o)]||0)+1);
   const newN=cur.filter(isNew).length;
-  const prevTotal=prev.length;
+  const history=parseHistory(wb);
+  const histPrev=history?history.filter(h=>h.total&&h.season!==seasonKey(currentTab)).slice(-1)[0]:null;
+  const prevTotal=histPrev?histPrev.total:prev.length;
   const target=1000;
   const k=$('kpis');k.innerHTML='';
   const kpi=(label,val,extra='')=>k.insertAdjacentHTML('beforeend',
     `<div class="kpi"><span>${label}</span><b>${val}</b>${extra}</div>`);
-  const deltaHTML=prevTotal?`<span class="delta ${cur.length>=prevTotal?'up':'down'}">${cur.length-prevTotal>=0?'+':''}${cur.length-prevTotal} vs ${seasonKey(prevTab)}</span>`:'';
+  const deltaHTML=prevTotal?`<span class="delta ${cur.length>=prevTotal?'up':'down'}">${cur.length-prevTotal>=0?'+':''}${cur.length-prevTotal} vs ${histPrev?histPrev.season:seasonKey(prevTab)}</span>`:'';
   kpi(seasonKey(currentTab)+' members',cur.length,deltaHTML);
   kpi('Adults',types.Adult||0);kpi('Exiles',types.Exile||0);kpi('Juniors',types.Junior||0);
   kpi('New this season',newN);
@@ -343,26 +372,27 @@ function analyse(wb){
 
   // seasons history from every season tab
   const sLabels=seasonTabs.map(seasonKey);
-  const per=t=>{
-    const c={Adult:0,Exile:0,Junior:0,Other:0,otherLabels:{}};
-    tables[t].rows.forEach(o=>{
-      const m=mtype(o);
-      if(m==='Adult'||m==='Exile'||m==='Junior')c[m]++;
-      else{c.Other++;const raw=norm(col(o,'membership type'))||'(blank)';c.otherLabels[raw]=(c.otherLabels[raw]||0)+1;}
-    });
-    return c;
-  };
-  const sc=seasonTabs.map(per);
-  window._seasonDiag=seasonTabs.map((t,i)=>({tab:t,counts:sc[i]}));
-  chart('cSeasons',{type:'bar',data:{labels:sLabels,datasets:[
-    {label:'Adult',data:sc.map(c=>c.Adult),backgroundColor:ROYAL},
-    {label:'Exile',data:sc.map(c=>c.Exile),backgroundColor:GOLD},
-    {label:'Junior',data:sc.map(c=>c.Junior),backgroundColor:GREEN},
-    {label:'Other types',data:sc.map(c=>c.Other),backgroundColor:'#8C9299'}]},
-    options:{scales:{x:{stacked:true},y:{stacked:true}},plugins:{legend:{position:'bottom'},
-      tooltip:{callbacks:{footer:items=>{
-        const i=items[0].dataIndex, tot=sc[i].Adult+sc[i].Exile+sc[i].Junior+sc[i].Other;
-        return 'Total: '+tot;}}}}}});
+  if(history){
+    chart('cSeasons',{type:'bar',data:{labels:history.map(h=>h.season),datasets:[
+      {label:'Adult',data:history.map(h=>h.adult),backgroundColor:ROYAL,stack:'m',order:2},
+      {label:'Exile',data:history.map(h=>h.exile),backgroundColor:GOLD,stack:'m',order:2},
+      {label:'Junior',data:history.map(h=>h.junior),backgroundColor:GREEN,stack:'m',order:2},
+      {label:'% of home support',type:'line',data:history.map(h=>h.pct),yAxisID:'y1',
+       borderColor:'#C0392B',backgroundColor:'#C0392B',tension:.3,pointRadius:2,order:1}]},
+      options:{scales:{x:{stacked:true},y:{stacked:true},
+        y1:{position:'right',grid:{drawOnChartArea:false},ticks:{callback:v=>v+'%'}}},
+        plugins:{legend:{position:'bottom'}}}});
+  } else {
+    const per=t=>{const c={Adult:0,Exile:0,Junior:0,Other:0};
+      tables[t].rows.forEach(o=>{const m=mtype(o);(c[m]!=null)?c[m]++:c.Other++;});return c};
+    const sc=seasonTabs.map(per);
+    chart('cSeasons',{type:'bar',data:{labels:sLabels,datasets:[
+      {label:'Adult',data:sc.map(c=>c.Adult),backgroundColor:ROYAL},
+      {label:'Exile',data:sc.map(c=>c.Exile),backgroundColor:GOLD},
+      {label:'Junior',data:sc.map(c=>c.Junior),backgroundColor:GREEN},
+      {label:'Other',data:sc.map(c=>c.Other),backgroundColor:'#8C9299'}]},
+      options:{scales:{x:{stacked:true},y:{stacked:true}},plugins:{legend:{position:'bottom'}}}});
+  }
 
   // joins by month
   const months={};
@@ -393,7 +423,14 @@ function analyse(wb){
   // lapsed chase list
   const keyOf=o=>(low(col(o,'first name'))+'|'+low(col(o,'last name'))+'|'+low(col(o,'post code')).replace(/\s/g,''));
   const curKeys=new Set(cur.map(keyOf));
-  const lapsed=prev.filter(o=>!curKeys.has(keyOf(o)));
+  let lapsedSource=prev, srcNote='';
+  if(!prev.length&&lapsedTabs.length){
+    lapsedSource=tables[lapsedTabs[lapsedTabs.length-1]].rows;
+    srcNote=' (from tab: '+lapsedTabs[lapsedTabs.length-1]+')';
+  }
+  const lapsed=lapsedSource.filter(o=>!curKeys.has(keyOf(o)));
+  const lh=document.querySelector('#lapsedCard h3');
+  if(lh)lh.firstChild.textContent='Renewal chase list'+srcNote+' — not yet in '+seasonKey(currentTab)+' ';
   lapsed.sort((a,b)=>(mtype(a)==='Exile'?-1:1)-(mtype(b)==='Exile'?-1:1));
   $('lapsedCount').textContent=lapsed.length+' to chase';
   const tbl=$('lapsedTable');
@@ -411,7 +448,8 @@ function analyse(wb){
     t.rows.forEach(o=>{const m=mtype(o);
       if(c[m]!=null)c[m]++;else{const raw=norm(col(o,'membership type'))||'(blank)';c.other[raw]=(c.other[raw]||0)+1;}});
     const oth=Object.entries(c.other).map(([k,v])=>`${k}: ${v}`).join(', ');
-    return `\u2022 <b>${n}</b>: <b>${t.rows.length}</b> total \u2014 Adult ${c.Adult}, Exile ${c.Exile}, Junior ${c.Junior}`+
+    const tag=low(n).includes('lapsed')?' <span class="pill" style="background:#8C9299">lapsed list</span>':'';
+    return `\u2022 <b>${n}</b>${tag}: <b>${t.rows.length}</b> total \u2014 Adult ${c.Adult}, Exile ${c.Exile}, Junior ${c.Junior}`+
       (oth?`, <b>other types: ${oth}</b>`:'')+
       ` (header row ${t.headerRow}${t.skipped?`, ${t.skipped} skipped \u2014 no name`:''})`;
   }).join('<br>');
