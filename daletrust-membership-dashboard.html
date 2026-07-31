@@ -343,13 +343,26 @@ function analyse(wb){
 
   // seasons history from every season tab
   const sLabels=seasonTabs.map(seasonKey);
-  const per=t=>{const c={Adult:0,Exile:0,Junior:0};tables[t].rows.forEach(o=>c[mtype(o)]=(c[mtype(o)]||0)+1);return c};
+  const per=t=>{
+    const c={Adult:0,Exile:0,Junior:0,Other:0,otherLabels:{}};
+    tables[t].rows.forEach(o=>{
+      const m=mtype(o);
+      if(m==='Adult'||m==='Exile'||m==='Junior')c[m]++;
+      else{c.Other++;const raw=norm(col(o,'membership type'))||'(blank)';c.otherLabels[raw]=(c.otherLabels[raw]||0)+1;}
+    });
+    return c;
+  };
   const sc=seasonTabs.map(per);
+  window._seasonDiag=seasonTabs.map((t,i)=>({tab:t,counts:sc[i]}));
   chart('cSeasons',{type:'bar',data:{labels:sLabels,datasets:[
     {label:'Adult',data:sc.map(c=>c.Adult),backgroundColor:ROYAL},
     {label:'Exile',data:sc.map(c=>c.Exile),backgroundColor:GOLD},
-    {label:'Junior',data:sc.map(c=>c.Junior),backgroundColor:GREEN}]},
-    options:{scales:{x:{stacked:true},y:{stacked:true}},plugins:{legend:{position:'bottom'}}}});
+    {label:'Junior',data:sc.map(c=>c.Junior),backgroundColor:GREEN},
+    {label:'Other types',data:sc.map(c=>c.Other),backgroundColor:'#8C9299'}]},
+    options:{scales:{x:{stacked:true},y:{stacked:true}},plugins:{legend:{position:'bottom'},
+      tooltip:{callbacks:{footer:items=>{
+        const i=items[0].dataIndex, tot=sc[i].Adult+sc[i].Exile+sc[i].Junior+sc[i].Other;
+        return 'Total: '+tot;}}}}}});
 
   // joins by month
   const months={};
@@ -393,9 +406,15 @@ function analyse(wb){
   const noNews=cur.filter(o=>!norm(col(o,'newsletter'))).length;
   const dupes=cur.length-new Set(cur.map(keyOf)).size;
   const cancelled=cancelledTab?tables[cancelledTab].rows.length:'n/a';
-  const diag=Object.entries(tables).map(([n,t])=>
-    `\u2022 <b>${n}</b>: counted <b>${t.rows.length}</b> members (header on row ${t.headerRow}${t.skipped?`, ${t.skipped} row${t.skipped>1?'s':''} skipped \u2014 no name in either name column`:''})`
-  ).join('<br>');
+  const diag=Object.entries(tables).map(([n,t])=>{
+    const c={Adult:0,Exile:0,Junior:0,other:{}};
+    t.rows.forEach(o=>{const m=mtype(o);
+      if(c[m]!=null)c[m]++;else{const raw=norm(col(o,'membership type'))||'(blank)';c.other[raw]=(c.other[raw]||0)+1;}});
+    const oth=Object.entries(c.other).map(([k,v])=>`${k}: ${v}`).join(', ');
+    return `\u2022 <b>${n}</b>: <b>${t.rows.length}</b> total \u2014 Adult ${c.Adult}, Exile ${c.Exile}, Junior ${c.Junior}`+
+      (oth?`, <b>other types: ${oth}</b>`:'')+
+      ` (header row ${t.headerRow}${t.skipped?`, ${t.skipped} skipped \u2014 no name`:''})`;
+  }).join('<br>');
   $('health').innerHTML=
     `<b>${noEmail}</b> members have no email address (unreachable digitally)<br>`+
     `<b>${noDOB}</b> have no age or date of birth (matters for under-18 card rules)<br>`+
