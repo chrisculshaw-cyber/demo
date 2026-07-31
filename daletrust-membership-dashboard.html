@@ -86,7 +86,9 @@
     <div class="grid">
       <div class="card"><h3>Membership by type</h3><canvas id="cType"></canvas></div>
       <div class="card"><h3>New vs renewing</h3><canvas id="cNew"></canvas></div>
-      <div class="card full"><h3>Season history (all year tabs found)</h3><canvas id="cSeasons"></canvas></div>
+      <div class="card full"><h3>Season history &mdash; official figures</h3><canvas id="cSeasons"></canvas>
+        <p class="hint" style="margin-top:8px">The red line is members as a share of average home attendance &mdash; it moves with <i>both</i> numbers, so it can hold steady while membership falls (if crowds fall too) or dip while membership holds (if crowds grow). Hover any season for the working.</p></div>
+      <div class="card full" id="lapsedChartCard" style="display:none"><h3>Lapsed by season &mdash; the recoverable members</h3><canvas id="cLapsed"></canvas></div>
       <div class="card"><h3>Joins by month (current season)</h3><canvas id="cJoins"></canvas></div>
       <div class="card"><h3>Age profile</h3><canvas id="cAge"></canvas></div>
       <div class="card"><h3>Join method</h3><canvas id="cMethod"></canvas></div>
@@ -377,11 +379,18 @@ function analyse(wb){
       {label:'Adult',data:history.map(h=>h.adult),backgroundColor:ROYAL,stack:'m',order:2},
       {label:'Exile',data:history.map(h=>h.exile),backgroundColor:GOLD,stack:'m',order:2},
       {label:'Junior',data:history.map(h=>h.junior),backgroundColor:GREEN,stack:'m',order:2},
-      {label:'% of home support',type:'line',data:history.map(h=>h.pct),yAxisID:'y1',
+      {label:'Members as % of avg home attendance',type:'line',data:history.map(h=>h.pct),yAxisID:'y1',
        borderColor:'#C0392B',backgroundColor:'#C0392B',tension:.3,pointRadius:2,order:1}]},
-      options:{scales:{x:{stacked:true},y:{stacked:true},
+      options:{interaction:{mode:'index',intersect:false},
+        scales:{x:{stacked:true},y:{stacked:true},
         y1:{position:'right',grid:{drawOnChartArea:false},ticks:{callback:v=>v+'%'}}},
-        plugins:{legend:{position:'bottom'}}}});
+        plugins:{legend:{position:'bottom'},
+          tooltip:{callbacks:{footer:items=>{
+            const h=history[items[0].dataIndex];
+            const out=['Total members: '+h.total.toLocaleString()];
+            if(h.att)out.push('Avg home attendance: '+Math.round(h.att).toLocaleString());
+            if(h.pct!=null&&h.att)out.push('= '+Math.round(h.pct)+'% of the home crowd');
+            return out;}}}}}});
   } else {
     const per=t=>{const c={Adult:0,Exile:0,Junior:0,Other:0};
       tables[t].rows.forEach(o=>{const m=mtype(o);(c[m]!=null)?c[m]++:c.Other++;});return c};
@@ -394,6 +403,13 @@ function analyse(wb){
       options:{scales:{x:{stacked:true},y:{stacked:true}},plugins:{legend:{position:'bottom'}}}});
   }
 
+  if(lapsedTabs.length){
+    $('lapsedChartCard').style.display='block';
+    const ll=lapsedTabs.map(t=>seasonKey(t)||t), ld=lapsedTabs.map(t=>tables[t].rows.length);
+    chart('cLapsed',{type:'bar',data:{labels:ll,datasets:[{label:'Lapsed members',data:ld,backgroundColor:'#C0392B'}]},
+      options:{plugins:{legend:{display:false},
+        tooltip:{callbacks:{footer:items=>'At \u00A37.50 each: \u00A3'+(items[0].raw*7.5).toFixed(2)+'/yr if won back'}}}}});
+  }
   // joins by month
   const months={};
   cur.forEach(o=>{const d=excelDate(col(o,'date joined'));if(d){const key=d.toLocaleDateString('en-GB',{month:'short',year:'2-digit'});months[key]=(months[key]||0)+1}});
