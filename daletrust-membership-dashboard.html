@@ -141,16 +141,18 @@ function findTable(ws){
     const cells=rows[i].map(low);
     if(cells.some(c=>c.includes('membership type'))&&cells.some(c=>c.includes('last name'))){
       const headers=rows[i].map(norm);
-      const out=[];
+      const out=[]; let skipped=0;
       for(let j=i+1;j<rows.length;j++){
         const r=rows[j];
         if(!r||r.every(c=>norm(c)===''))continue;
         const o={};headers.forEach((h,k)=>{if(h)o[h]=r[k]});
-        // require at least a surname to count as a member row
-        const ln=Object.keys(o).find(k=>low(k).includes('last name'));
-        if(ln&&norm(o[ln]))out.push(o);
+        const lnK=Object.keys(o).find(k=>low(k).includes('last name'));
+        const fnK=Object.keys(o).find(k=>low(k).includes('first name'));
+        const ln=lnK?norm(o[lnK]):'', fn=fnK?norm(o[fnK]):'';
+        if(low(ln)==='last name')continue;               // repeated header row
+        if(ln||fn)out.push(o); else skipped++;           // count if either name present
       }
-      return {headers,rows:out};
+      return {headers,rows:out,headerRow:i+1,skipped};
     }
   }
   return null;
@@ -391,12 +393,15 @@ function analyse(wb){
   const noNews=cur.filter(o=>!norm(col(o,'newsletter'))).length;
   const dupes=cur.length-new Set(cur.map(keyOf)).size;
   const cancelled=cancelledTab?tables[cancelledTab].rows.length:'n/a';
+  const diag=Object.entries(tables).map(([n,t])=>
+    `\u2022 <b>${n}</b>: counted <b>${t.rows.length}</b> members (header on row ${t.headerRow}${t.skipped?`, ${t.skipped} row${t.skipped>1?'s':''} skipped \u2014 no name in either name column`:''})`
+  ).join('<br>');
   $('health').innerHTML=
     `<b>${noEmail}</b> members have no email address (unreachable digitally)<br>`+
     `<b>${noDOB}</b> have no age or date of birth (matters for under-18 card rules)<br>`+
     `<b>${noNews}</b> have no newsletter preference recorded (GDPR consent gap)<br>`+
     `<b>${dupes}</b> possible duplicate entries (same name + postcode)<br>`+
-    `<b>${cancelled}</b> rows on the Cancelled tab`;
+    `<b>${cancelled}</b> rows on the Cancelled tab<br><br><b>Per-tab counts (check these against each tab's own totals):</b><br>${diag}`;
 
   renderExiles(wb);
   drop.style.display='none';$('dash').style.display='block';
