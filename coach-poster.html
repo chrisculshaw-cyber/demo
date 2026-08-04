@@ -103,7 +103,7 @@ function render(){
   let size=84;   // matches the static ROCHDALE AFC
   do{x.font=`700 ${size}px Oswald`;if(x.measureText(opp).width<=545)break;size-=3;}while(size>28);
   x.fillStyle='#FFFFFF';
-  x.fillText(opp, 575-x.measureText(opp).width, 411);
+  x.fillText(opp, 660-x.measureText(opp).width, 411);
   // date line composed between the static dashes, centred at 948
   const dateT=($('date').value.toUpperCase()||'').trim();
   const koT=(($('ko').value||'').trim())+' KO';
@@ -124,7 +124,7 @@ function render(){
   // departs time, right of the static label
   const dep=$('dep').value.toUpperCase()||'';
   let ts=42;do{x.font=`700 ${ts}px Oswald`;if(x.measureText(dep).width<=210)break;ts-=2;}while(ts>20);
-  x.fillStyle='#FFFFFF';x.fillText(dep,458,708);
+  x.fillStyle='#FFFFFF';x.fillText(dep,458,717);
   // price digits, right of the static £
   const pr=($('price').value||'').replace(/[^0-9.]/g,'');
   let ps=40;do{x.font=`700 ${ps}px Oswald`;if(x.measureText(pr).width<=150)break;ps-=2;}while(ps>18);
