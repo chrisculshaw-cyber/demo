@@ -41,8 +41,8 @@
     <input type="text" id="ko" value="15:00">
     <label>Coach departs</label>
     <input type="text" id="dep" value="12:00 PM">
-    <label>Price per seat</label>
-    <input type="text" id="price" value="&pound;15">
+    <label>Price per seat <small style="text-transform:none">(number only &mdash; the &pound; is on the poster)</small></label>
+    <input type="text" id="price" value="15">
     <button class="go" onclick="download()">&#11015; Download poster</button>
     <p class="hint" style="margin-top:10px">Posts perfectly to Facebook &amp; X. For Instagram, crop square in the app or ask Chris for a square template.</p>
   </div>
@@ -96,40 +96,38 @@ function render(){
   if(!tmpl.complete)return;
   x.clearRect(0,0,1983,793);
   x.drawImage(tmpl,0,0);
-  // headline: {OPP} VS ROCHDALE AFC centred at 991, baseline 306
-  const opp=$('opp').value.toUpperCase()||'OPPOSITION';
-  const parts=[[opp+' ',WHITE],['VS',BLUE],[' ROCHDALE AFC',WHITE]];
-  const full=parts.map(p=>p[0]).join('');
-  const size=fitFont(full,'700',66,1100);
-  x.font=`700 ${size}px Oswald`;
-  let w=x.measureText(full).width, cx=991-w/2;
   x.textBaseline='alphabetic';
-  parts.forEach(([t,c])=>{x.fillStyle=c;x.fillText(t,cx,306);cx+=x.measureText(t).width;});
-  // date line centred at 991, baseline 388, with dashes
-  const dt=($('date').value.toUpperCase()||'')+'  '+($('ko').value||'')+' KO';
-  const ds=fitFont(dt,'600',38,760);
-  x.font=`600 ${ds}px Oswald`;
-  const dw=x.measureText(dt).width;
-  x.fillStyle=WHITE;x.fillText(dt,991-dw/2,392);
-  x.strokeStyle=ICE;x.lineWidth=4;x.lineCap='round';
-  const gap=28;
-  x.beginPath();x.moveTo(486,378);x.lineTo(991-dw/2-gap,378);x.stroke();
-  x.beginPath();x.moveTo(991+dw/2+gap,378);x.lineTo(1496,378);x.stroke();
-  // opposition badge: contain in (429..631, 332..628)
+  // opponent name: right-aligned against the static "VS ROCHDALE AFC"
+  const opp=$('opp').value.toUpperCase()||'OPPOSITION';
+  let size=104;
+  do{x.font=`700 ${size}px Oswald`;if(x.measureText(opp).width<=505)break;size-=3;}while(size>28);
+  x.fillStyle='#FFFFFF';
+  x.fillText(opp, 575-x.measureText(opp).width, 411);
+  // date line composed between the static dashes, centred at 948
+  const dateT=($('date').value.toUpperCase()||'').trim();
+  const koT=(($('ko').value||'').trim())+' KO';
+  const sep='  |  ';
+  let ds=44, full=dateT+sep+koT;
+  do{x.font=`600 ${ds}px Oswald`;if(x.measureText(full).width<=560)break;ds-=2;}while(ds>20);
+  let cx=948-x.measureText(full).width/2;
+  x.fillStyle='#FFFFFF';x.fillText(dateT,cx,500);cx+=x.measureText(dateT).width;
+  x.fillStyle='#35A7FF';x.fillText(sep,cx,500);cx+=x.measureText(sep).width;
+  x.fillStyle='#FFFFFF';x.fillText(koT,cx,500);
+  // opponent badge in the clear zone left of the bus
   if(badgeImg.complete&&badgeImg.naturalWidth){
-    const bw=202,bh=296,bx=428,by=332;
+    const bx=462,by=498,bw=244,bh=198;
     const s=Math.min(bw/badgeImg.naturalWidth,bh/badgeImg.naturalHeight);
     const w2=badgeImg.naturalWidth*s,h2=badgeImg.naturalHeight*s;
     x.drawImage(badgeImg,bx+(bw-w2)/2,by+(bh-h2)/2,w2,h2);
   }
-  // departs time
+  // departs time, right of the static label
   const dep=$('dep').value.toUpperCase()||'';
-  x.font=`700 ${fitFont(dep,'700',50,235)}px Oswald`;
-  x.fillStyle=WHITE;x.fillText(dep,278,712);
-  // price
-  const pr=$('price').value||'';
-  x.font=`700 ${fitFont(pr,'700',84,185)}px Oswald`;
-  x.fillStyle=WHITE;x.fillText(pr,1482,700);
+  let ts=42;do{x.font=`700 ${ts}px Oswald`;if(x.measureText(dep).width<=210)break;ts-=2;}while(ts>20);
+  x.fillStyle='#FFFFFF';x.fillText(dep,458,708);
+  // price digits, right of the static £
+  const pr=($('price').value||'').replace(/[^0-9.]/g,'');
+  let ps=40;do{x.font=`700 ${ps}px Oswald`;if(x.measureText(pr).width<=150)break;ps-=2;}while(ps>18);
+  x.fillStyle='#FFFFFF';x.fillText(pr,1504,694);
 }
 
 function download(){
