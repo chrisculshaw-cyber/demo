@@ -107,7 +107,7 @@ function render(){
     var vsW=x.measureText('VS').width*1.28;
     var oppW=x.measureText(opp).width, homeW=x.measureText(home).width;
     const left=CX-vsW/2-GAP-oppW, right=CX+vsW/2+GAP+homeW;
-    if((left>=70&&right<=1450)||size<=30)break;
+    if((left>=60&&right<=1545)||size<=30)break;
     size-=3;
   }
   x.font=`700 ${size}px Oswald`;
@@ -143,7 +143,7 @@ function render(){
   // departs time, right of the static label
   const dep=$('dep').value.toUpperCase()||'';
   let ts=38;do{x.font=`700 ${ts}px Oswald`;if(x.measureText(dep).width<=205)break;ts-=2;}while(ts>18);
-  x.fillStyle='#FFFFFF';x.fillText(dep,288,752);
+  x.fillStyle='#FFFFFF';x.fillText(dep,322,752);
   // price digits, right of the static £
   const pr=($('price').value||'').replace(/[^0-9.]/g,'');
   let ps=40;do{x.font=`700 ${ps}px Oswald`;if(x.measureText(pr).width<=150)break;ps-=2;}while(ps>18);
