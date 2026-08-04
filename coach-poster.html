@@ -34,7 +34,8 @@
     <input type="file" id="badgeFile" accept="image/*">
     <p class="hint">Cup tie against someone new? Choose "Upload a badge…" and pick their crest image.</p>
     <label>Opposition name (as shown on the poster)</label>
-    <input type="text" id="opp" value="BRADFORD CITY AFC">
+    <input type="text" id="opp" value="BRADFORD CITY">
+    <p class="hint">Tip: shorter names render bigger — "BRADFORD CITY" matches the Rochdale text; adding "AFC" makes it shrink to fit.</p>
     <label>Match date</label>
     <input type="text" id="date" value="SATURDAY 8TH AUGUST">
     <label>Kick-off</label>
@@ -99,8 +100,8 @@ function render(){
   x.textBaseline='alphabetic';
   // opponent name: right-aligned against the static "VS ROCHDALE AFC"
   const opp=$('opp').value.toUpperCase()||'OPPOSITION';
-  let size=104;
-  do{x.font=`700 ${size}px Oswald`;if(x.measureText(opp).width<=505)break;size-=3;}while(size>28);
+  let size=84;   // matches the static ROCHDALE AFC
+  do{x.font=`700 ${size}px Oswald`;if(x.measureText(opp).width<=545)break;size-=3;}while(size>28);
   x.fillStyle='#FFFFFF';
   x.fillText(opp, 575-x.measureText(opp).width, 411);
   // date line composed between the static dashes, centred at 948
@@ -115,7 +116,7 @@ function render(){
   x.fillStyle='#FFFFFF';x.fillText(koT,cx,500);
   // opponent badge in the clear zone left of the bus
   if(badgeImg.complete&&badgeImg.naturalWidth){
-    const bx=462,by=498,bw=244,bh=198;
+    const bx=470,by=480,bw=230,bh=172;
     const s=Math.min(bw/badgeImg.naturalWidth,bh/badgeImg.naturalHeight);
     const w2=badgeImg.naturalWidth*s,h2=badgeImg.naturalHeight*s;
     x.drawImage(badgeImg,bx+(bw-w2)/2,by+(bh-h2)/2,w2,h2);
